@@ -1,0 +1,82 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Texas Eastern Transmission (TETCO)",
+        "description": "Operator: Enbridge | Type: Interstate | Capacity: 11,800 MMCF/D"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-94.1, 29.7], [-92.0, 30.2], [-89.5, 31.0],
+          [-87.0, 33.5], [-85.0, 35.2], [-82.5, 37.0],
+          [-80.0, 39.5], [-78.0, 41.0], [-74.5, 40.7]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Transcontinental Gas Pipeline (Transco)",
+        "description": "Operator: Williams | Type: Interstate | Capacity: 17,600 MMCF/D"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-95.3, 29.8], [-93.5, 30.3], [-91.0, 30.8],
+          [-88.5, 32.3], [-86.0, 34.5], [-84.0, 36.2],
+          [-82.0, 38.0], [-79.5, 40.0], [-77.0, 40.7],
+          [-75.5, 39.9], [-74.2, 40.5]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "El Paso Natural Gas",
+        "description": "Operator: Kinder Morgan | Type: Interstate | Capacity: 5,700 MMCF/D"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-118.0, 34.1], [-116.0, 33.5], [-113.5, 33.0],
+          [-111.0, 32.5], [-108.5, 32.2], [-106.5, 31.8],
+          [-104.0, 31.5], [-102.0, 31.8], [-100.0, 32.5]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Northern Natural Gas (NNG)",
+        "description": "Operator: Southern Union | Type: Interstate | Capacity: 6,200 MMCF/D"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-101.5, 35.5], [-99.0, 37.0], [-97.0, 38.5],
+          [-95.0, 39.5], [-93.5, 41.0], [-92.0, 41.8],
+          [-90.5, 42.3], [-88.0, 42.0], [-87.5, 42.5]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Rockies Express Pipeline (REX)",
+        "description": "Operator: Tallgrass Energy | Type: Interstate | Capacity: 1,800 MMCF/D"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-110.5, 41.5], [-108.0, 41.2], [-105.5, 40.5],
+          [-103.0, 40.0], [-100.5, 40.5], [-98.0, 40.8],
+          [-95.5, 41.0], [-93.0, 40.5], [-90.5, 39.5],
+          [-88.0, 39.0], [-86.0, 39.5], [-83.5, 40.0], [-82.0, 40.5]
+        ]
+      }
+    }
+  ]
+}
