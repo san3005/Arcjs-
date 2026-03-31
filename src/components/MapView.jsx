@@ -89,7 +89,7 @@ export default function ArcGISMapView() {
       map.remove(pipelineLayer);
 
       const fallbackLayer = new GeoJSONLayer({
-        url: "/pipelines.geojson",
+        url: "/Arcjs-/pipelines.geojson",
         title: "Natural Gas Pipelines (Sample)",
         renderer: pipelineRenderer,
         popupTemplate: new PopupTemplate({
