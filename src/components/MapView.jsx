@@ -1,7 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 
+import esriConfig from "@arcgis/core/config.js";
 import Map from "@arcgis/core/Map.js";
 import MapView from "@arcgis/core/views/MapView.js";
+
+// Tell ArcGIS SDK where its assets live on GitHub Pages
+esriConfig.assetsPath = "/Arcjs-/assets";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer.js";
 import GeoJSONLayer from "@arcgis/core/layers/GeoJSONLayer.js";
 import Legend from "@arcgis/core/widgets/Legend.js";
