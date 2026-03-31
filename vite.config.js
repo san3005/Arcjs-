@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig({
-  base: "/Arcjs-/",
+  base: "/Arcjs-/",  // GitHub Pages serves at /Arcjs-/
   plugins: [react()],
   optimizeDeps: {
     exclude: ["@arcgis/core"],
