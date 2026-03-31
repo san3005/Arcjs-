@@ -18,7 +18,7 @@ const PIPELINE_FEATURE_LAYER_URL =
 
 const pipelineRenderer = new SimpleRenderer({
   symbol: new SimpleLineSymbol({
-    color: [255, 165, 30, 0.85], // vivid orange, semi-transparent
+    color: [255, 165, 30, 0.85],
     width: 1.5,
     style: "solid",
   }),
@@ -41,12 +41,11 @@ const pipelinePopupTemplate = new PopupTemplate({
 });
 
 export default function ArcGISMapView() {
-  const mapDivRef = useRef(null);
   const viewRef = useRef(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!mapDivRef.current || viewRef.current) return;
+    if (viewRef.current) return;
 
     const pipelineLayer = new FeatureLayer({
       url: PIPELINE_FEATURE_LAYER_URL,
@@ -73,77 +72,52 @@ export default function ArcGISMapView() {
       layers: [pipelineLayer],
     });
 
+    // Use container ID string — more stable than DOM ref with ArcGIS SDK
     const view = new MapView({
-      container: mapDivRef.current,
+      container: "arcgis-map-container",
       map,
-      center: [-96.5, 38.5], // geographic center of contiguous US
+      center: [-96.5, 38.5],
       zoom: 4,
-      ui: {
-        components: ["attribution"],
-      },
+      ui: { components: ["attribution"] },
     });
 
     viewRef.current = view;
 
     view.when(() => {
-      const legend = new Legend({
-        view,
-        style: { type: "classic", layout: "stack" },
-      });
-      view.ui.add(legend, "bottom-left");
-
-      const scaleBar = new ScaleBar({ view, unit: "dual" });
-      view.ui.add(scaleBar, "bottom-right");
+      view.ui.add(new Legend({ view, style: { type: "classic", layout: "stack" } }), "bottom-left");
+      view.ui.add(new ScaleBar({ view, unit: "dual" }), "bottom-right");
     });
 
-    // Handle layer load errors — fall back to local GeoJSON sample data
     pipelineLayer.load().catch((err) => {
-      console.warn("FeatureLayer failed to load, falling back to GeoJSON:", err);
-      setError("Live pipeline service unavailable — showing sample data.");
+      console.warn("FeatureLayer failed, falling back to GeoJSON:", err);
+      setError("Live data unavailable — showing sample pipelines.");
       map.remove(pipelineLayer);
-
-      const fallbackLayer = new GeoJSONLayer({
-        url: "/Arcjs-/pipelines.geojson",
+      map.add(new GeoJSONLayer({
+        url: import.meta.env.BASE_URL + "pipelines.geojson",
         title: "Natural Gas Pipelines (Sample)",
         renderer: pipelineRenderer,
-        popupTemplate: new PopupTemplate({
-          title: "{name}",
-          content: "{description}",
-        }),
-      });
-      map.add(fallbackLayer);
+        popupTemplate: new PopupTemplate({ title: "{name}", content: "{description}" }),
+      }));
     });
 
     return () => {
-      if (viewRef.current) {
-        viewRef.current.destroy();
-        viewRef.current = null;
-      }
+      viewRef.current?.destroy();
+      viewRef.current = null;
     };
   }, []);
 
   return (
     <>
       {error && (
-        <div
-          style={{
-            position: "absolute",
-            top: 8,
-            left: "50%",
-            transform: "translateX(-50%)",
-            background: "#5c3317",
-            color: "#ffd580",
-            padding: "6px 14px",
-            borderRadius: 6,
-            fontSize: 13,
-            zIndex: 10,
-            border: "1px solid #a0622a",
-          }}
-        >
+        <div style={{
+          position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)",
+          background: "#5c3317", color: "#ffd580", padding: "6px 14px",
+          borderRadius: 6, fontSize: 13, zIndex: 10, border: "1px solid #a0622a",
+        }}>
           {error}
         </div>
       )}
-      <div id="arcgis-map-container" ref={mapDivRef} />
+      <div id="arcgis-map-container" />
     </>
   );
 }
