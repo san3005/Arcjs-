@@ -1,15 +1,143 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gas Pipeline Map — ArcGIS POC</title>
-    <script type="module" crossorigin src="/Arcjs-/assets/index-BMJltNDp.js"></script>
-    <link rel="modulepreload" crossorigin href="/Arcjs-/assets/arcgis-core-Bykcv6vY.js">
-    <link rel="stylesheet" crossorigin href="/Arcjs-/assets/arcgis-core-CWvfvh6M.css">
-    <link rel="stylesheet" crossorigin href="/Arcjs-/assets/index-DrFxwMXN.css">
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gas Pipeline Map — ArcGIS POC</title>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.32/esri/themes/dark/main.css" />
+  <script src="https://js.arcgis.com/4.32/"></script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; width: 100%; overflow: hidden;
+      font-family: "Avenir Next", Helvetica, Arial, sans-serif; }
+
+    .app { display: flex; flex-direction: column; height: 100%; background: #1a1a2e; }
+
+    header {
+      flex-shrink: 0; height: 52px; background: #0d1b2a;
+      border-bottom: 1px solid #2a4a6b;
+      display: flex; align-items: center; padding: 0 20px; gap: 12px;
+    }
+    header h1 { color: #e8f4fd; font-size: 16px; font-weight: 600; letter-spacing: 0.5px; }
+    .badge {
+      font-size: 11px; color: #7fb3d3; background: #1a3550;
+      padding: 2px 8px; border-radius: 12px; border: 1px solid #2a5580;
+    }
+
+    #map-container { flex: 1; }
+
+    #error-banner {
+      display: none; position: absolute; top: 60px; left: 50%;
+      transform: translateX(-50%);
+      background: #5c3317; color: #ffd580; padding: 6px 14px;
+      border-radius: 6px; font-size: 13px; z-index: 10;
+      border: 1px solid #a0622a;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>US Natural Gas Pipeline Network</h1>
+      <span class="badge">EIA Data</span>
+      <span class="badge">ArcGIS SDK 4.32</span>
+    </header>
+    <div id="map-container"></div>
+    <div id="error-banner"></div>
+  </div>
+
+  <script>
+    require([
+      "esri/Map",
+      "esri/views/MapView",
+      "esri/Basemap",
+      "esri/layers/WebTileLayer",
+      "esri/layers/FeatureLayer",
+      "esri/layers/GeoJSONLayer",
+      "esri/widgets/Legend",
+      "esri/widgets/ScaleBar",
+      "esri/renderers/SimpleRenderer",
+      "esri/symbols/SimpleLineSymbol",
+      "esri/PopupTemplate"
+    ], function(
+      Map, MapView, Basemap, WebTileLayer,
+      FeatureLayer, GeoJSONLayer,
+      Legend, ScaleBar,
+      SimpleRenderer, SimpleLineSymbol, PopupTemplate
+    ) {
+
+      // Free CARTO dark basemap — no API key needed
+      var darkBasemap = new Basemap({
+        baseLayers: [new WebTileLayer({
+          urlTemplate: "https://{subDomain}.basemaps.cartocdn.com/dark_all/{level}/{col}/{row}.png",
+          subDomains: ["a", "b", "c", "d"],
+          copyright: "© OpenStreetMap contributors © CARTO"
+        })],
+        title: "Dark", id: "dark"
+      });
+
+      var pipelineRenderer = new SimpleRenderer({
+        symbol: new SimpleLineSymbol({
+          color: [255, 165, 30, 0.85],
+          width: 2,
+          style: "solid"
+        })
+      });
+
+      var pipelinePopup = new PopupTemplate({
+        title: "{NAME}",
+        content: [{
+          type: "fields",
+          fieldInfos: [
+            { fieldName: "OPERATOR", label: "Operator" },
+            { fieldName: "TYPE",     label: "Pipeline Type" },
+            { fieldName: "CAPACITY", label: "Capacity (MMCF/D)" },
+            { fieldName: "DIAMETER", label: "Diameter (inches)" },
+            { fieldName: "STATE",    label: "State(s)" }
+          ]
+        }]
+      });
+
+      // Try live EIA pipeline data first
+      var pipelineLayer = new FeatureLayer({
+        url: "https://services1.arcgis.com/Hp6G80Pky0om7QvQ/arcgis/rest/services/Natural_Gas_Interstate_and_Intrastate_Pipelines/FeatureServer/0",
+        title: "Natural Gas Pipelines (EIA)",
+        renderer: pipelineRenderer,
+        popupTemplate: pipelinePopup,
+        outFields: ["*"]
+      });
+
+      var map = new Map({ basemap: darkBasemap, layers: [pipelineLayer] });
+
+      var view = new MapView({
+        container: "map-container",
+        map: map,
+        center: [-96.5, 38.5],
+        zoom: 4,
+        ui: { components: ["attribution"] }
+      });
+
+      view.when(function() {
+        view.ui.add(new Legend({ view: view, style: { type: "classic", layout: "stack" } }), "bottom-left");
+        view.ui.add(new ScaleBar({ view: view, unit: "dual" }), "bottom-right");
+      });
+
+      // Fallback to sample GeoJSON if EIA service unavailable
+      pipelineLayer.load().catch(function() {
+        var banner = document.getElementById("error-banner");
+        banner.textContent = "Live data unavailable — showing sample pipelines.";
+        banner.style.display = "block";
+        map.remove(pipelineLayer);
+        map.add(new GeoJSONLayer({
+          url: "./pipelines.geojson",
+          title: "Natural Gas Pipelines (Sample)",
+          renderer: pipelineRenderer,
+          popupTemplate: new PopupTemplate({ title: "{name}", content: "{description}" })
+        }));
+      });
+    });
+  </script>
+</body>
 </html>
