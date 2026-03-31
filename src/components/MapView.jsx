@@ -1,11 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 
-import esriConfig from "@arcgis/core/config.js";
 import Map from "@arcgis/core/Map.js";
 import MapView from "@arcgis/core/views/MapView.js";
-
-// Tell ArcGIS SDK where its assets live on GitHub Pages
-esriConfig.assetsPath = "/Arcjs-/assets";
+import Basemap from "@arcgis/core/Basemap.js";
+import WebTileLayer from "@arcgis/core/layers/WebTileLayer.js";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer.js";
 import GeoJSONLayer from "@arcgis/core/layers/GeoJSONLayer.js";
 import Legend from "@arcgis/core/widgets/Legend.js";
@@ -58,8 +56,20 @@ export default function ArcGISMapView() {
       outFields: ["*"],
     });
 
+    const darkBasemap = new Basemap({
+      baseLayers: [
+        new WebTileLayer({
+          urlTemplate: "https://{subDomain}.basemaps.cartocdn.com/dark_all/{level}/{col}/{row}.png",
+          subDomains: ["a", "b", "c", "d"],
+          copyright: "© OpenStreetMap contributors © CARTO",
+        }),
+      ],
+      title: "Dark",
+      id: "dark",
+    });
+
     const map = new Map({
-      basemap: "dark-gray-vector",
+      basemap: darkBasemap,
       layers: [pipelineLayer],
     });
 
