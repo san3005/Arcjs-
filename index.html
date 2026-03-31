@@ -26,14 +26,13 @@
       padding: 2px 8px; border-radius: 12px; border: 1px solid #2a5580;
     }
 
-    #map-container { flex: 1; }
+    #map-container { flex: 1; position: relative; }
 
-    #error-banner {
-      display: none; position: absolute; top: 60px; left: 50%;
-      transform: translateX(-50%);
-      background: #5c3317; color: #ffd580; padding: 6px 14px;
-      border-radius: 6px; font-size: 13px; z-index: 10;
-      border: 1px solid #a0622a;
+    #status {
+      display: none; position: absolute; top: 8px; right: 8px;
+      background: rgba(13,27,42,0.9); color: #7fb3d3; padding: 5px 12px;
+      border-radius: 6px; font-size: 12px; z-index: 10;
+      border: 1px solid #2a4a6b;
     }
   </style>
 </head>
@@ -44,8 +43,9 @@
       <span class="badge">EIA Data</span>
       <span class="badge">ArcGIS SDK 4.32</span>
     </header>
-    <div id="map-container"></div>
-    <div id="error-banner"></div>
+    <div id="map-container">
+      <div id="status"></div>
+    </div>
   </div>
 
   <script>
@@ -80,36 +80,29 @@
 
       var pipelineRenderer = new SimpleRenderer({
         symbol: new SimpleLineSymbol({
-          color: [255, 165, 30, 0.85],
-          width: 2,
+          color: [255, 140, 0, 0.9],
+          width: 2.5,
           style: "solid"
         })
       });
 
-      var pipelinePopup = new PopupTemplate({
-        title: "{NAME}",
-        content: [{
-          type: "fields",
-          fieldInfos: [
-            { fieldName: "OPERATOR", label: "Operator" },
-            { fieldName: "TYPE",     label: "Pipeline Type" },
-            { fieldName: "CAPACITY", label: "Capacity (MMCF/D)" },
-            { fieldName: "DIAMETER", label: "Diameter (inches)" },
-            { fieldName: "STATE",    label: "State(s)" }
-          ]
-        }]
+      var samplePopup = new PopupTemplate({
+        title: "{name}",
+        content: "{description}"
       });
 
-      // Try live EIA pipeline data first
-      var pipelineLayer = new FeatureLayer({
-        url: "https://services1.arcgis.com/Hp6G80Pky0om7QvQ/arcgis/rest/services/Natural_Gas_Interstate_and_Intrastate_Pipelines/FeatureServer/0",
-        title: "Natural Gas Pipelines (EIA)",
+      // Always load local GeoJSON first (self-hosted, guaranteed to work)
+      var geojsonLayer = new GeoJSONLayer({
+        url: "pipelines.geojson",
+        title: "Natural Gas Pipelines (Sample)",
         renderer: pipelineRenderer,
-        popupTemplate: pipelinePopup,
-        outFields: ["*"]
+        popupTemplate: samplePopup
       });
 
-      var map = new Map({ basemap: darkBasemap, layers: [pipelineLayer] });
+      var map = new Map({
+        basemap: darkBasemap,
+        layers: [geojsonLayer]
+      });
 
       var view = new MapView({
         container: "map-container",
@@ -122,20 +115,39 @@
       view.when(function() {
         view.ui.add(new Legend({ view: view, style: { type: "classic", layout: "stack" } }), "bottom-left");
         view.ui.add(new ScaleBar({ view: view, unit: "dual" }), "bottom-right");
-      });
 
-      // Fallback to sample GeoJSON if EIA service unavailable
-      pipelineLayer.load().catch(function() {
-        var banner = document.getElementById("error-banner");
-        banner.textContent = "Live data unavailable — showing sample pipelines.";
-        banner.style.display = "block";
-        map.remove(pipelineLayer);
-        map.add(new GeoJSONLayer({
-          url: "./pipelines.geojson",
-          title: "Natural Gas Pipelines (Sample)",
+        // Attempt to swap in live EIA data after map loads
+        var eiaLayer = new FeatureLayer({
+          url: "https://services1.arcgis.com/Hp6G80Pky0om7QvQ/arcgis/rest/services/Natural_Gas_Interstate_and_Intrastate_Pipelines/FeatureServer/0",
+          title: "Natural Gas Pipelines (EIA)",
           renderer: pipelineRenderer,
-          popupTemplate: new PopupTemplate({ title: "{name}", content: "{description}" })
-        }));
+          popupTemplate: new PopupTemplate({
+            title: "{NAME}",
+            content: [{
+              type: "fields",
+              fieldInfos: [
+                { fieldName: "OPERATOR", label: "Operator" },
+                { fieldName: "TYPE",     label: "Pipeline Type" },
+                { fieldName: "CAPACITY", label: "Capacity (MMCF/D)" },
+                { fieldName: "DIAMETER", label: "Diameter (inches)" },
+                { fieldName: "STATE",    label: "State(s)" }
+              ]
+            }]
+          }),
+          outFields: ["*"]
+        });
+
+        eiaLayer.load().then(function() {
+          map.remove(geojsonLayer);
+          map.add(eiaLayer);
+          var s = document.getElementById("status");
+          s.textContent = "Live EIA data loaded";
+          s.style.display = "block";
+          setTimeout(function() { s.style.display = "none"; }, 3000);
+        }).catch(function() {
+          // Keep the GeoJSON layer — it's already showing
+          console.log("EIA service unavailable, showing sample data");
+        });
       });
     });
   </script>
